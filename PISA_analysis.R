@@ -127,3 +127,51 @@ Y <- as_tibble(dummy.code(PISA_2015_GERMANY$gender))  %>%
   select(-1)
 mod_reg <- tam(resp, Y=Y)
 summary(mod_reg)
+
+# EAP vs. EAP With regression
+ggplot(PISA_2015_GERMANY) +
+  geom_point(aes(x=mod_reg$person$EAP, y=mod$person$EAP)) +
+  theme_bw() +
+  xlim(c(-5,5)) + ylim(c(-5,5)) +
+  xlab("EAP With Regression") + ylab("EAP")
+ggsave("EAP_vs_EAP-regression.png")
+
+# WLE vs. WLE with regression 
+ggplot(PISA_2015_GERMANY) +
+  geom_point(aes(x=tam.wle(mod_reg)$theta, y=wle$theta)) +
+  theme_bw() +
+  xlim(c(-5,5)) + ylim(c(-5,5)) +
+  xlab("WLE With Regression") + ylab("WLE")
+ggsave("WLE_vs_WLE-regression.png")
+
+
+##########################################
+# Comparison of PV results with and without regression
+##########################################
+
+gender_mean <- pv %>%
+  group_by(PISA_2015_GERMANY$gender) %>%
+  summarize(mean(PV1.Dim1), mean(PV2.Dim1), mean(PV3.Dim1), mean(PV4.Dim1), mean(PV5.Dim1))
+diff(rowMeans(select(gender_mean, -1)))
+
+pv_reg <- tam.pv(mod_reg)$pv
+gender_mean_reg <- pv_reg %>%
+  group_by(PISA_2015_GERMANY$gender) %>%
+  summarize(mean(PV1.Dim1), mean(PV2.Dim1), mean(PV3.Dim1), mean(PV4.Dim1), mean(PV5.Dim1))
+rowMeans(select(gender_mean_reg, -1))
+diff(rowMeans(select(gender_mean_reg, -1)))
+
+
+##########################################
+# Model Estimation (Multidimensional)
+##########################################
+
+# Definition of loading (Q) matrix
+Q <- array( 0 , dim = c( ncol(resp) , 4 ))
+Q[1:4,1] <- 1
+Q[5:7,2] <- 1
+Q[8:10,3] <- 1
+Q[11:14,4] <- 1
+m_mod <- tam(resp, Q=Q, control=list(snodes=2000, maxiter=50))
+
+
